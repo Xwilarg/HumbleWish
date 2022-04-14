@@ -10,5 +10,9 @@ chrome.storage.sync.get({
             });
             chrome.extension.getBackgroundPage().saveWishlistInfos(this.value);
         }
-    })
+    });
+
+    document.getElementById("refreshStorage").addEventListener("click", () => {
+        chrome.extension.getBackgroundPage().saveWishlistInfos(elems.ids);
+    });
 })

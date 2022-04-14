@@ -1,24 +1,36 @@
 function saveWishlistInfos(ids) {
     ids.split(',').forEach(e => {
         const id = e.trim();
-        fetch(`https://store.steampowered.com/wishlist/profiles/${id}/wishlistdata`).then(resp => {
-            resp.text().then(text => {
-                const json = JSON.parse(text);
-                if (json.success === 2) {
-                    console.error(`Invalid ID ${id}`);
-                } else {
-                    let names = [];
-                    for (const key in json) {
-                        names.push(json[key].name.replaceAll(";", ""));
-                    }
-                    let dict = {};
-                    dict["content-" + id] = names.join(';');
-                    chrome.storage.sync.set(dict);
-                    console.log(`Saving games for ${id}: ${dict["content-" + id]}`);
+        let games = [];
+        saveGames(id, 0, games, () => {
+            let dict = {};
+            dict["content-" + id] = games.join(';');
+            chrome.storage.sync.set(dict);
+            console.log(`[${id}] Games found: ${dict["content-" + id]}`);
+        })
+    });
+}
+
+function saveGames(id, page, games, onSucceed) {
+    fetch(`https://store.steampowered.com/wishlist/profiles/${id}/wishlistdata?p=${page}`).then(resp => {
+        resp.json().then(json => {
+            if (json.success === 2) {
+                console.error(`Invalid ID ${id}`);
+                if (games.length > 0) {
+                    onSucceed();
                 }
-            });
-        }, err => {
-            console.error(`Failed to fetch for ID ${id}: ${err}`);
+            } else {
+                for (const key in json) {
+                    games.push(json[key].name.replaceAll(";", ""));
+                }
+                if (Object.keys(json).length === 100) {
+                    saveGames(id, page + 1, games, onSucceed);
+                } else {
+                    onSucceed();
+                }
+            }
         });
+    }, err => {
+        console.error(`Failed to fetch for ID ${id}: ${err}`);
     });
 }

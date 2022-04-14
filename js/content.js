@@ -28,10 +28,14 @@ if (parser !== null) {
     });
 
     chrome.storage.sync.get(null, function(elems) {
-        var allKeys = Object.keys(elems);
         elems.ids.split(',').forEach(e => {
             const id = e.trim();
-            console.log(elems["content-" + id].split(';'));
+            const wishGames = elems["content-" + id].split(';');
+            availableGames.forEach(game => {
+                if (wishGames.includes(game.replaceAll(";", ""))) {
+                    console.debug(`[${id}] Found ${game} in wishlist`);
+                }
+            });
         });
     });
 } else {
